@@ -95,16 +95,34 @@ problema, pero si querés persistencia real hay dos opciones simples:
   requirements.txt`, `python manage.py migrate`, y configurar la app web
   WSGI apuntando a `config.wsgi.application`.
 
-### Alertas automáticas por email en producción
+### Alertas automáticas por email en producción (100% gratis)
 
-Render free no incluye cron jobs ilimitados. La forma más simple de
-automatizar `enviar_alertas_vencimiento` a diario sin costo es un **GitHub
-Actions workflow programado** que llame a un endpoint propio, o el **Cron
-Job gratuito de Render** (tiene un tier free limitado). Como alternativa
-100% gratuita: un workflow de GitHub Actions con `schedule: cron` que haga
-`ssh`/`curl` a un endpoint protegido que dispare el comando, o correrlo
-manualmente/con un servicio externo tipo cron-job.org contra una vista que
-ejecute el management command.
+Render free no tiene Cron Jobs ni Shell, así que la automatización se hace
+con un endpoint HTTP protegido por token + un cron externo gratuito:
+
+1. **Configurá el envío de email** en las variables de entorno del servicio
+   (Environment):
+   - `EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend`
+   - `EMAIL_HOST=smtp.gmail.com` (o el SMTP que uses)
+   - `EMAIL_PORT=587`
+   - `EMAIL_USE_TLS=True`
+   - `EMAIL_HOST_USER=tu-correo@gmail.com`
+   - `EMAIL_HOST_PASSWORD=` una **contraseña de aplicación** de Gmail (no tu
+     contraseña normal — se genera en https://myaccount.google.com/apppasswords,
+     requiere verificación en 2 pasos activada)
+   - `DEFAULT_FROM_EMAIL=tu-correo@gmail.com`
+   - `ALERTA_EMAIL_DESTINO=` el correo que va a recibir las alertas
+   - `ALERTA_CRON_TOKEN=` un valor secreto inventado por vos
+2. Guardá los cambios (esto redespliega el servicio).
+3. La vista `GET /activos/tareas/alertas/?token=TU_TOKEN` ejecuta
+   `enviar_alertas_vencimiento` y devuelve `200 OK` si el token es correcto,
+   o `403` si falta o es incorrecto. Probala primero manualmente en el navegador.
+4. Registrate gratis en https://cron-job.org y creá un cron job que pegue
+   diariamente a: `https://TU-APP.onrender.com/activos/tareas/alertas/?token=TU_TOKEN`
+
+**Nota**: el plan free de Render "duerme" el servicio tras ~15 min sin
+tráfico y tarda unos segundos en despertar. Configurá el cron con timeout
+de al menos 60 segundos si la herramienta lo permite.
 
 ## Estructura del proyecto
 
