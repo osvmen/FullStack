@@ -1,6 +1,6 @@
-from django.core.mail import send_mail
-from django.core.management.base import BaseCommand
+import requests
 from django.conf import settings
+from django.core.management.base import BaseCommand
 
 from activos.models import Activo
 
@@ -8,9 +8,32 @@ from activos.models import Activo
 class Command(BaseCommand):
     help = (
         "Envia un correo de alerta por cada Dominio/Hosting vencido o "
-        "proximo a vencer (dentro de Activo.DIAS_ALERTA dias). "
+        "proximo a vencer (dentro de Activo.DIAS_ALERTA dias), usando la "
+        "API HTTP de Resend (no SMTP, que Render bloquea en el plan free). "
         "Pensado para ejecutarse a diario mediante un cron/scheduler."
     )
+
+    def enviar_email(self, asunto, mensaje, destinatario):
+        api_key = settings.RESEND_API_KEY
+        if not api_key:
+            self.stdout.write(self.style.WARNING(mensaje))
+            return
+
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {api_key}"},
+            json={
+                "from": settings.DEFAULT_FROM_EMAIL,
+                "to": [destinatario],
+                "subject": asunto,
+                "text": mensaje,
+            },
+            timeout=15,
+        )
+        if not response.ok:
+            raise RuntimeError(
+                f"Resend devolvió {response.status_code}: {response.text}"
+            )
 
     def handle(self, *args, **options):
         activos = Activo.objects.all()
@@ -19,6 +42,8 @@ class Command(BaseCommand):
         if not alertas:
             self.stdout.write(self.style.SUCCESS("No hay vencimientos pendientes."))
             return
+
+        destinatario = settings.ALERTA_EMAIL_DESTINO
 
         for activo in alertas:
             estado = "VENCIDO" if activo.esta_vencido else "PRÓXIMO A VENCER"
@@ -32,17 +57,10 @@ class Command(BaseCommand):
                 f"Fecha de vencimiento: {activo.vencimiento.strftime('%d/%m/%Y')}\n"
                 f"Días restantes: {activo.dias_restantes}\n"
             )
-            destinatario = getattr(settings, "ALERTA_EMAIL_DESTINO", None)
             if not destinatario:
                 self.stdout.write(self.style.WARNING(mensaje))
                 continue
-            send_mail(
-                asunto,
-                mensaje,
-                settings.DEFAULT_FROM_EMAIL,
-                [destinatario],
-                fail_silently=False,
-            )
+            self.enviar_email(asunto, mensaje, destinatario)
             self.stdout.write(self.style.SUCCESS(f"Alerta enviada: {activo.nombre}"))
 
         self.stdout.write(
