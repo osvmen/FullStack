@@ -104,5 +104,9 @@ def ejecutar_alertas_vencimiento(request):
     if not token_esperado or not secrets.compare_digest(token_recibido, token_esperado):
         return HttpResponseForbidden("Token inválido o no configurado.")
 
-    call_command("enviar_alertas_vencimiento")
+        try:
+        call_command("enviar_alertas_vencimiento")
+    except Exception as exc:
+        return HttpResponse(f"Error al procesar alertas: {exc}", status=500)
+
     return HttpResponse("Alertas procesadas correctamente.")
