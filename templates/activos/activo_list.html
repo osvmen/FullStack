@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if total_vencidos %}
+<div class="alert alert-danger d-flex justify-content-between align-items-center">
+    <span><strong>&#9888; {{ total_vencidos }}</strong> registro(s) vencido(s).</span>
+    <a href="?alerta=vencido" class="btn btn-sm btn-outline-danger">Ver vencidos</a>
+</div>
+{% endif %}
+{% if total_por_vencer %}
+<div class="alert alert-warning d-flex justify-content-between align-items-center">
+    <span><strong>&#9203; {{ total_por_vencer }}</strong> registro(s) por vencer en los próximos 30 días.</span>
+    <a href="?alerta=por_vencer" class="btn btn-sm btn-outline-warning">Ver próximos a vencer</a>
+</div>
+{% endif %}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small mb-0">Buscar</label>
+                <input type="text" name="q" value="{{ filtros.q|default:'' }}" class="form-control form-control-sm" placeholder="Nombre, empresa, encargado...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-0">Tipo</label>
+                <select name="tipo" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    {% for value, label in tipos %}
+                    <option value="{{ value }}" {% if filtros.tipo == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-0">Estado</label>
+                <select name="estado" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    {% for value, label in estados %}
+                    <option value="{{ value }}" {% if filtros.estado == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-0">Pago</label>
+                <select name="estado_pago" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    {% for value, label in estados_pago %}
+                    <option value="{{ value }}" {% if filtros.estado_pago == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-sm btn-primary w-100">Filtrar</button>
+            </div>
+            <div class="col-md-1">
+                <a href="{% url 'activos:lista' %}" class="btn btn-sm btn-outline-secondary w-100">Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-responsive">
+<table class="table table-bordered table-hover bg-white align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Tipo</th>
+            <th>Nombre</th>
+            <th>Empresa</th>
+            <th>Estado</th>
+            <th>Encargado</th>
+            <th>Empresa Responsable</th>
+            <th>Estado de Pago</th>
+            <th>Vencimiento</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for activo in activos %}
+        <tr class="fila-{{ activo.estado_vencimiento }}">
+            <td>{{ activo.get_tipo_display }}</td>
+            <td>{{ activo.nombre }}</td>
+            <td>{{ activo.empresa }}</td>
+            <td>
+                <span class="badge {% if activo.estado == 'HABILITADO' %}bg-success{% else %}bg-secondary{% endif %}">
+                    {{ activo.get_estado_display }}
+                </span>
+            </td>
+            <td>{{ activo.encargado }}</td>
+            <td>{{ activo.empresa_responsable }}</td>
+            <td>
+                <span class="badge {% if activo.estado_pago == 'PAGADO' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                    {{ activo.get_estado_pago_display }}
+                </span>
+            </td>
+            <td>
+                {{ activo.vencimiento|date:"d/m/Y" }}
+                <span class="badge badge-{{ activo.estado_vencimiento }}">
+                    {% if activo.esta_vencido %}Vencido{% elif activo.esta_por_vencer %}{{ activo.dias_restantes }} día(s){% else %}Vigente{% endif %}
+                </span>
+            </td>
+            <td class="text-nowrap">
+                <a href="{% url 'activos:editar' activo.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                <a href="{% url 'activos:eliminar' activo.pk %}" class="btn btn-sm btn-outline-danger">Eliminar</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="text-center text-muted py-4">No hay registros cargados.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{% if is_paginated %}
+<nav>
+    <ul class="pagination">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% endblock %}
