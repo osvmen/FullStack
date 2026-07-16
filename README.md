@@ -1,11 +1,11 @@
-# Gestor de Dominios y Hosting
+# Gestor de Dominios, Hosting y Licencias
 
 Sistema simple en Django para registrar y controlar el vencimiento de dominios y
 hosting de tus clientes/empresas.
 
 ## Datos que gestiona
 
-- Tipo (Dominio o Hosting)
+- Tipo (Dominio, Hosting o Licencia)
 - Nombre
 - Empresa
 - Estado (Habilitado / Deshabilitado)
