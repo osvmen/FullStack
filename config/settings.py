@@ -132,6 +132,11 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "alertas@gestor.local"
 # Email al que se envían las alertas de vencimiento
 ALERTA_EMAIL_DESTINO = os.environ.get("ALERTA_EMAIL_DESTINO", "")
 
+# Token secreto para disparar /activos/tareas/alertas/ desde un cron externo
+# (Render free no tiene Cron Jobs ni Shell). Si no está configurado, el
+# endpoint queda deshabilitado.
+ALERTA_CRON_TOKEN = os.environ.get("ALERTA_CRON_TOKEN", "")
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "True") == "True"
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
