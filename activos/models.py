@@ -4,9 +4,9 @@ from django.db import models
 
 
 class Activo(models.Model):
-    class Tipo(models.TextChoices):
         DOMINIO = "DOMINIO", "Dominio"
         HOSTING = "HOSTING", "Hosting"
+        LICENCIA = "LICENCIA", "Licencia"
 
     class Estado(models.TextChoices):
         HABILITADO = "HABILITADO", "Habilitado"
