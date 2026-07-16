@@ -1,6 +1,11 @@
+import secrets
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.management import call_command
 from django.db.models import Q
+from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
@@ -85,3 +90,19 @@ class ActivoDeleteView(LoginRequiredMixin, DeleteView):
     def form_valid(self, form):
         messages.success(self.request, "Registro eliminado.")
         return super().form_valid(form)
+
+
+def ejecutar_alertas_vencimiento(request):
+    """Dispara el envío de alertas de vencimiento por email.
+
+    Pensado para ser llamado por un cron externo gratuito (Render free no
+    tiene Cron Jobs ni Shell), protegido con un token compartido en vez de
+    login, porque el llamador no es un usuario con sesión.
+    """
+    token_esperado = settings.ALERTA_CRON_TOKEN
+    token_recibido = request.GET.get("token", "")
+    if not token_esperado or not secrets.compare_digest(token_recibido, token_esperado):
+        return HttpResponseForbidden("Token inválido o no configurado.")
+
+    call_command("enviar_alertas_vencimiento")
+    return HttpResponse("Alertas procesadas correctamente.")
