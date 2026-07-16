@@ -1,5 +1,5 @@
 """
-Django settings for config project (Gestor de Dominios y Hosting).
+Django settings for config project (Gestor de Dominios, Hosting y Licencias).
 """
 
 import os
