@@ -119,18 +119,14 @@ LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "activos:lista"
 LOGOUT_REDIRECT_URL = "login"
 
-# Email (alertas de vencimiento). Por defecto imprime en consola.
-EMAIL_BACKEND = os.environ.get(
-    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
-)
-EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
-EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "alertas@gestor.local")
+# Email (alertas de vencimiento), enviado vía la API HTTP de Resend
+# (https://resend.com). No se usa SMTP porque Render bloquea las conexiones
+# salientes por ese protocolo en el plan free.
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "onboarding@resend.dev")
 # Email al que se envían las alertas de vencimiento
 ALERTA_EMAIL_DESTINO = os.environ.get("ALERTA_EMAIL_DESTINO", "")
+
 
 # Token secreto para disparar /activos/tareas/alertas/ desde un cron externo
 # (Render free no tiene Cron Jobs ni Shell). Si no está configurado, el
